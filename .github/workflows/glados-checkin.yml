@@ -1,0 +1,42 @@
+# 工作流名称
+name: GLADOS Auto Checkin
+
+# 触发条件：定时触发 + 手动触发
+on:
+  # 定时任务（UTC 时间，对应北京时间需要 +8 小时）
+  # 例如：UTC 16:00 = 北京时间 00:00，UTC 8:00 = 北京时间 16:00
+  schedule:
+    - cron: '0 16 * * *'  # 每天北京时间 00:00 执行（可自行修改）
+  # 手动触发（方便测试）
+  workflow_dispatch:
+
+# 执行任务
+jobs:
+  checkin:
+    # 运行环境
+    runs-on: ubuntu-latest
+    steps:
+      # 步骤1：拉取代码（基础操作）
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 步骤2：执行签到脚本
+      - name: Run checkin script
+        env:
+          # 从 Secret 中读取 Cookie
+          GLADOS_COOKIE: ${{ secrets.GLADOS_COOKIE }}
+        run: |
+          # 编写签到的 Shell 脚本（模拟 POST 请求）
+          response=$(curl -s -X POST \
+            https://glados.rocks/api/user/checkin \
+            -H "Cookie: $GLADOS_COOKIE" \
+            -H "Content-Type: application/json" \
+            -d '{"token":"glados.network"}')
+          # 输出签到结果（方便查看日志）
+          echo "签到响应结果：$response"
+          
+          # 可选：获取账号信息（验证 Cookie 是否有效）
+          user_info=$(curl -s -X GET \
+            https://glados.rocks/api/user/status \
+            -H "Cookie: $GLADOS_COOKIE")
+          echo "账号信息：$user_info"
